@@ -875,7 +875,6 @@ def getIp(host):
 def main(domain, threads, savefile, ports,check, silent, verbose, enable_bruteforce, engines):
     bruteforce_list = set()
     search_list = set()
-    print(check)
     if is_windows:
         subdomains_queue = list()
     else:
@@ -990,7 +989,6 @@ if __name__ == "__main__":
     enable_bruteforce = args.bruteforce
     verbose = args.verbose
     engines = args.engines
-    print(check)
     if verbose or verbose is None:
         verbose = True
     banner()
