@@ -98,6 +98,8 @@ def parse_args():
     parser.add_argument('-t', '--threads', help='Number of threads to use for subbrute bruteforce', type=int, default=30)
     parser.add_argument('-e', '--engines', help='Specify a comma-separated list of search engines')
     parser.add_argument('-o', '--output', help='Save the results to text file')
+    parser.add_argument('-c', '--check', help='Try to resolve domain Ip', nargs='?', default=False)
+    
     return parser.parse_args()
 
 
@@ -136,7 +138,7 @@ def subdomain_sorting_key(hostname):
 
 
 class enumratorBase(object):
-    def __init__(self, base_url, engine_name, domain, subdomains=None, silent=False, verbose=True):
+    def __init__(self, base_url, engine_name, domain,check=False, subdomains=None,  silent=False, verbose=True):
         subdomains = subdomains or []
         self.domain = urlparse.urlparse(domain).netloc
         self.session = requests.Session()
@@ -145,6 +147,7 @@ class enumratorBase(object):
         self.base_url = base_url
         self.engine_name = engine_name
         self.silent = silent
+        self.check = check
         self.verbose = verbose
         self.headers = {
               'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
@@ -252,9 +255,9 @@ class enumratorBase(object):
 
 
 class enumratorBaseThreaded(multiprocessing.Process, enumratorBase):
-    def __init__(self, base_url, engine_name, domain, subdomains=None, q=None, lock=threading.Lock(), silent=False, verbose=True):
+    def __init__(self, base_url, engine_name, domain, subdomains=None,q=None, lock=threading.Lock(), silent=False, verbose=True):
         subdomains = subdomains or []
-        enumratorBase.__init__(self, base_url, engine_name, domain, subdomains, silent=silent, verbose=verbose)
+        enumratorBase.__init__(self, base_url, engine_name, domain, subdomains, verbose=verbose)
         multiprocessing.Process.__init__(self)
         self.lock = lock
         self.q = q
@@ -545,8 +548,7 @@ class NetcraftEnum(enumratorBaseThreaded):
         cookies = dict()
         cookies_list = cookie[0:cookie.find(';')].split("=")
         cookies[cookies_list[0]] = cookies_list[1]
-        # hashlib.sha1 requires utf-8 encoded str
-        cookies['netcraft_js_verification_response'] = hashlib.sha1(urllib.unquote(cookies_list[1]).encode('utf-8')).hexdigest()
+        cookies['netcraft_js_verification_response'] = hashlib.sha1(urllib.unquote(cookies_list[1])).hexdigest()
         return cookies
 
     def get_cookies(self, headers):
@@ -861,11 +863,19 @@ class portscan():
             t = threading.Thread(target=self.port_scan, args=(subdomain, self.ports))
             t.start()
 
+def getIp(host):
 
-def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, engines):
+    try:
+        ip =" => " + socket.gethostbyname(host)
+    except socket.gaierror:
+        ip =  " => Not resolved "
+    return ip
+ 
+
+def main(domain, threads, savefile, ports,check, silent, verbose, enable_bruteforce, engines):
     bruteforce_list = set()
     search_list = set()
-
+    print(check)
     if is_windows:
         subdomains_queue = list()
     else:
@@ -963,23 +973,25 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
 
         elif not silent:
             for subdomain in subdomains:
-                print(G + subdomain + W)
+                if check is None:
+                     print(G + subdomain + W+ getIp(subdomain)) 
+                else:
+                    print(G + subdomain + W )
     return subdomains
 
 
-def interactive():
+if __name__ == "__main__":
     args = parse_args()
     domain = args.domain
     threads = args.threads
     savefile = args.output
     ports = args.ports
+    check = args.check
     enable_bruteforce = args.bruteforce
     verbose = args.verbose
     engines = args.engines
+    print(check)
     if verbose or verbose is None:
         verbose = True
     banner()
-    res = main(domain, threads, savefile, ports, silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
-
-if __name__ == "__main__":
-    interactive()
+    res = main(domain, threads, savefile, ports,check, silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
