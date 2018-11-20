@@ -107,6 +107,7 @@ Short Form    | Long Form     | Description
 -d            | --domain      | Domain name to enumerate subdomains of
 -b            | --bruteforce  | Enable the subbrute bruteforce module
 -p            | --ports       | Scan the found subdomains against specific tcp ports
+-c            | --check       | Attempt to resolve the host ip address
 -v            | --verbose     | Enable the verbose mode and display results in realtime
 -t            | --threads     | Number of threads to use for subbrute bruteforce
 -e            | --engines     | Specify a comma-separated list of search engines
@@ -154,6 +155,7 @@ The main function will return a set of unique subdomains found by Sublist3r
 * **domain**: The domain you want to enumerate subdomains of.
 * **savefile**: save the output into text file.
 * **ports**: specify a comma-sperated list of the tcp ports to scan.
+* **check**: Attempt to resolve the host ip address.
 * **silent**: set sublist3r to work in silent mode during the execution (helpful when you don't need a lot of noise).
 * **verbose**: display the found subdomains in real time.
 * **enable_bruteforce**: enable the bruteforce module.
