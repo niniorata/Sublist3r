@@ -938,6 +938,9 @@ def main(domain, threads, savefile, ports,check, silent, verbose, enable_brutefo
 
     subdomains = set(subdomains_queue)
     for subdomain in subdomains:
+        #ahorasi
+        if check is None:
+                     subdomain+= getIp(subdomain)
         search_list.add(subdomain)
 
     if enable_bruteforce:
@@ -971,11 +974,8 @@ def main(domain, threads, savefile, ports,check, silent, verbose, enable_brutefo
             pscan.run()
 
         elif not silent:
-            for subdomain in subdomains:
-                if check is None:
-                     print(G + subdomain + W+ getIp(subdomain)) 
-                else:
-                    print(G + subdomain + W )
+            for subdomain in subdomains:     
+               print(G + subdomain + W )
     return subdomains
 
 
@@ -993,8 +993,7 @@ def interactive():
     if verbose or verbose is None:
         verbose = True
     banner()
-    res = main(domain, threads, savefile, ports,check, silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
-
+    res = main(domain, threads, savefile, ports, check ,silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
 
 if __name__ == "__main__":
     interactive()
