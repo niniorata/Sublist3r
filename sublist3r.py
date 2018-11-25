@@ -872,7 +872,7 @@ def getIp(host):
     return ip
  
 
-def main(domain, threads, savefile, ports,check, silent, verbose, enable_bruteforce, engines):
+def main(domain, threads, savefile, ports, check, silent, verbose, enable_bruteforce, engines):
     bruteforce_list = set()
     search_list = set()
     if is_windows:
@@ -938,7 +938,6 @@ def main(domain, threads, savefile, ports,check, silent, verbose, enable_brutefo
 
     subdomains = set(subdomains_queue)
     for subdomain in subdomains:
-        #ahorasi
         if check is None:
                      subdomain+= getIp(subdomain)
         search_list.add(subdomain)
@@ -993,7 +992,7 @@ def interactive():
     if verbose or verbose is None:
         verbose = True
     banner()
-    res = main(domain, threads, savefile, ports, check ,silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
+    res = main(domain, threads, savefile, ports, check,silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
 
 if __name__ == "__main__":
     interactive()
