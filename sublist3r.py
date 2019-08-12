@@ -99,7 +99,7 @@ def parse_args():
     parser.add_argument('-e', '--engines', help='Specify a comma-separated list of search engines')
     parser.add_argument('-o', '--output', help='Save the results to text file')
     parser.add_argument('-c', '--check', help='Try to resolve domain Ip', nargs='?', default=False)
-    parser.add_argument('-cc', '--checkbanner', help='Try to resolve domain Ip and grab banner', nargs='?', default=False)
+    parser.add_argument('-cb','--checkbanner', help='Try to resolve domain Ip and grab banner', nargs='?', default=False)
     
     return parser.parse_args()
 

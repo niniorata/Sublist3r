@@ -108,7 +108,7 @@ Short Form    | Long Form     | Description
 -b            | --bruteforce  | Enable the subbrute bruteforce module
 -p            | --ports       | Scan the found subdomains against specific tcp ports
 -c            | --check       | Attempt to resolve the host ip address
--cc           | --checkbanner | Attempt to resolve domain Ip and grab banner
+-cb           | --checkbanner | Attempt to resolve domain Ip and grab banner
 -v            | --verbose     | Enable the verbose mode and display results in realtime
 -t            | --threads     | Number of threads to use for subbrute bruteforce
 -e            | --engines     | Specify a comma-separated list of search engines
