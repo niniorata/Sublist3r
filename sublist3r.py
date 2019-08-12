@@ -99,6 +99,7 @@ def parse_args():
     parser.add_argument('-e', '--engines', help='Specify a comma-separated list of search engines')
     parser.add_argument('-o', '--output', help='Save the results to text file')
     parser.add_argument('-c', '--check', help='Try to resolve domain Ip', nargs='?', default=False)
+    parser.add_argument('-cc', '--checkbanner', help='Try to resolve domain Ip and grab banner', nargs='?', default=False)
     
     return parser.parse_args()
 
@@ -868,21 +869,22 @@ class portscan():
             t = threading.Thread(target=self.port_scan, args=(subdomain, self.ports,self.check))
             t.start()
 
-def getIp(host):
+def getIp(host,g_banner = False):
 
     try:
         ip = socket.gethostbyname(host)
         ip2 =" => " +  ip 
-        banner,body = http_banner_grabber(ip)
-    except :
-        ip2 =  " => Not resolved "
+        if g_banner == True:
+            banner,body = http_banner_grabber(ip)
+    except Exception:
+        ip2 =  " => Not resolved \n"
     if 'banner' in locals():
-        return ip2 + "\n\n**** Banner ****\n" + banner + "\n****************"
+        return ip2 + "\n**** Banner ****\n" + banner + "\n****************\n\n"
     else:
         return ip2
  
 
-def main(domain, threads, savefile, ports, check, silent, verbose, enable_bruteforce, engines):
+def main(domain, threads, savefile, ports, check,checkbanner, silent, verbose, enable_bruteforce, engines):
     bruteforce_list = set()
     search_list = set()
     if is_windows:
@@ -948,9 +950,6 @@ def main(domain, threads, savefile, ports, check, silent, verbose, enable_brutef
 
     subdomains = set(subdomains_queue)
     for subdomain in subdomains:
-        #ahorasi
-        if check is None:
-                     subdomain+= getIp(subdomain)
         search_list.add(subdomain)
 
     if enable_bruteforce:
@@ -986,10 +985,12 @@ def main(domain, threads, savefile, ports, check, silent, verbose, enable_brutef
         elif not silent:
             for subdomain in subdomains:     
                         if check is None:
-                          
-                           print(G + subdomain + W + getIp(subdomain))
+                                print(G + subdomain + W + getIp(subdomain))
                         else:
-                            print(G + subdomain + W )
+                            if checkbanner is None:
+                                print(G + subdomain + W + getIp(subdomain,True))
+                            else:
+                                print(G + subdomain + W )
     return subdomains
 
 
@@ -1001,14 +1002,14 @@ def interactive():
     savefile = args.output
     ports = args.ports
     check = args.check
+    checkbanner = args.checkbanner
     enable_bruteforce = args.bruteforce
     verbose = args.verbose
     engines = args.engines
-    check = args.check
     if verbose or verbose is None:
         verbose = True
     banner()
-    res = main(domain, threads, savefile, ports, check,silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
+    res = main(domain, threads, savefile, ports, check,checkbanner,silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
 
 def http_banner_grabber(ip, port=80, method="HEAD",
                         timeout=60, http_type="HTTP/1.1"):
