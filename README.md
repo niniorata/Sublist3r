@@ -107,7 +107,11 @@ Short Form    | Long Form     | Description
 -d            | --domain      | Domain name to enumerate subdomains of
 -b            | --bruteforce  | Enable the subbrute bruteforce module
 -p            | --ports       | Scan the found subdomains against specific tcp ports
+<<<<<<< HEAD
 -c            | --check       | Attempt to resolve the host ip address
+=======
+-c            | --check       | Attempt to resolve the host ip address, if resolve grab banner
+>>>>>>> b352cec742a4983141dae93289967db4a98c8029
 -v            | --verbose     | Enable the verbose mode and display results in realtime
 -t            | --threads     | Number of threads to use for subbrute bruteforce
 -e            | --engines     | Specify a comma-separated list of search engines

@@ -835,13 +835,14 @@ class PassiveDNS(enumratorBaseThreaded):
 
 
 class portscan():
-    def __init__(self, subdomains, ports):
+    def __init__(self, subdomains, ports,check):
         self.subdomains = subdomains
         self.ports = ports
+        self.check = check
         self.threads = 20
         self.lock = threading.BoundedSemaphore(value=self.threads)
 
-    def port_scan(self, host, ports):
+    def port_scan(self, host, ports,check):
         openports = []
         self.lock.acquire()
         for port in ports:
@@ -856,23 +857,32 @@ class portscan():
                 pass
         self.lock.release()
         if len(openports) > 0:
-            print("%s%s%s - %sFound open ports:%s %s%s%s" % (G, host, W, R, W, Y, ', '.join(openports), W))
+                if self.check:
+                    ##TO DO resolve display ports   
+                    print("%s%s%s - %sFound open ports:%s %s%s%s" % (G, host, W, R, W, Y, ', '.join(openports)+ getIp(host), W ))
+                else:
 
+                     print("%s%s%s - %sFound open ports:%s %s%s%s" % (G, host, W, R, W, Y, ', '.join(openports), W))
     def run(self):
         for subdomain in self.subdomains:
-            t = threading.Thread(target=self.port_scan, args=(subdomain, self.ports))
+            t = threading.Thread(target=self.port_scan, args=(subdomain, self.ports,self.check))
             t.start()
 
 def getIp(host):
 
     try:
-        ip =" => " + socket.gethostbyname(host)
-    except socket.gaierror:
-        ip =  " => Not resolved "
-    return ip
+        ip = socket.gethostbyname(host)
+        ip2 =" => " +  ip 
+        banner,body = http_banner_grabber(ip)
+    except (socket.gaierror,socket.timeout) as e:
+        ip2 =  " => Not resolved "
+    if 'banner' in locals():
+        return ip2 + "\n\n**** Banner ****\n" + banner + "\n****************"
+    else:
+        return ip2
  
 
-def main(domain, threads, savefile, ports,check, silent, verbose, enable_bruteforce, engines):
+def main(domain, threads, savefile, ports, check, silent, verbose, enable_bruteforce, engines):
     bruteforce_list = set()
     search_list = set()
     if is_windows:
@@ -970,12 +980,16 @@ def main(domain, threads, savefile, ports,check, silent, verbose, enable_brutefo
             if not silent:
                 print(G + "[-] Start port scan now for the following ports: %s%s" % (Y, ports) + W)
             ports = ports.split(',')
-            pscan = portscan(subdomains, ports)
+            pscan = portscan(subdomains, ports, check)
             pscan.run()
 
         elif not silent:
             for subdomain in subdomains:     
-               print(G + subdomain + W )
+                        if check is None:
+                          
+                           print(G + subdomain + W + getIp(subdomain))
+                        else:
+                            print(G + subdomain + W )
     return subdomains
 
 
@@ -990,10 +1004,73 @@ def interactive():
     enable_bruteforce = args.bruteforce
     verbose = args.verbose
     engines = args.engines
+    check = args.check
     if verbose or verbose is None:
         verbose = True
     banner()
-    res = main(domain, threads, savefile, ports, check ,silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
+    res = main(domain, threads, savefile, ports, check,silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
 
+def http_banner_grabber(ip, port=80, method="HEAD",
+                        timeout=60, http_type="HTTP/1.1"):
+    assert method in ['GET', 'HEAD']
+    # @see: http://stackoverflow.com/q/246859/538284
+    assert http_type in ['HTTP/0.9', "HTTP/1.0", 'HTTP/1.1']
+    cr_lf = '\r\n'
+    lf_lf = '\n\n'
+    crlf_crlf = cr_lf + cr_lf
+    res_sep = ''
+    # how much read from buffer socket in every read
+    rec_chunk = 4096
+    s = socket.socket()
+    s.settimeout(timeout)
+    s.connect((ip, port))
+    # the req_data is like 'HEAD HTTP/1.1 \r\n'
+    req_data = "{} / {}{}".format(method, http_type, cr_lf)
+    # if is a HTTP 1.1 protocol request,
+    if http_type == "HTTP/1.1":
+        # then we need to send Host header (we send ip instead of host here!)
+        # adding host header to req_data like 'Host: google.com:80\r\n'
+        req_data += 'Host: {}:{}{}'.format(ip, port, cr_lf)
+        # set connection header to close for HTTP 1.1
+        # adding connection header to req_data like 'Connection: close\r\n'
+        req_data += "Connection: close{}".format(cr_lf)
+    # headers join together with `\r\n` and ends with `\r\n\r\n`
+    # adding '\r\n' to end of req_data
+    req_data += cr_lf
+    # the s.send() method may send only partial content. 
+    # so we used s.sendall()
+    s.sendall(req_data.encode())
+    res_data = b''
+    # default maximum header response is different in web servers: 4k, 8k, 16k
+    # @see: http://stackoverflow.com/a/8623061/538284
+    # the s.recv(n) method may receive less than n bytes, 
+    # so we used it in while.
+    while 1:
+        try:
+            chunk = s.recv(rec_chunk)
+            res_data += chunk
+        except socket.error:
+            break
+        if not chunk:
+            break
+    if res_data:
+        # decode `res_data` after reading all content of data buffer
+        res_data = res_data.decode()
+    else:
+        return '', ''
+    # detect header and body separated that is '\r\n\r\n' or '\n\n'
+    if crlf_crlf in res_data:
+        res_sep = crlf_crlf
+    elif lf_lf in res_data:
+        res_sep = lf_lf
+    # for under HTTP/1.0 request type for servers doesn't support it
+    #  and servers send just send body without header !
+    if res_sep not in [crlf_crlf, lf_lf] or res_data.startswith('<'):
+        return '', res_data
+    # split header and data section from
+    # `HEADER\r\n\r\nBODY` response or `HEADER\n\nBODY` response
+    content = res_data.split(res_sep)
+    banner, body = "".join(content[:1]), "".join(content[1:])
+    return banner, body
 if __name__ == "__main__":
     interactive()
