@@ -874,7 +874,7 @@ def getIp(host):
         ip = socket.gethostbyname(host)
         ip2 =" => " +  ip 
         banner,body = http_banner_grabber(ip)
-    except (socket.gaierror,socket.timeout) as e:
+    except :
         ip2 =  " => Not resolved "
     if 'banner' in locals():
         return ip2 + "\n\n**** Banner ****\n" + banner + "\n****************"
